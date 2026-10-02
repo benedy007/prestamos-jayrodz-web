@@ -17,6 +17,7 @@ function PrivacidadPage() {
     <SiteShell>
       <main className="mx-auto max-w-3xl px-5 py-14 sm:px-8">
         <SectionHeading
+          as="h1"
           eyebrow="Privacidad"
           title="Tu información se queda en tu caso."
           lede={site.rncLine}
@@ -30,6 +31,26 @@ function PrivacidadPage() {
             El teléfono, la dirección, el trabajo y las referencias sirven para
             evaluarte y coordinar el pago. El mensaje se arma en tu teléfono y
             se envía por WhatsApp a {site.phoneDisplay}.
+          </p>
+          <p>
+            Al enviar la solicitud nos autorizas, de forma expresa, a tratar tus
+            datos personales y a consultar tu historial en un buró de crédito
+            solo para evaluar el préstamo (Ley 172-13 de protección de datos).
+            Sin esa autorización no podemos evaluar la solicitud.
+          </p>
+          <p>
+            Mientras llenas el formulario, los datos se guardan temporalmente
+            en este navegador (no en un servidor de la web) para que no los
+            pierdas si cambias de pantalla. Se borran al enviar la solicitud por
+            WhatsApp o al cerrar la pestaña.
+          </p>
+          <p
+            data-todo="privacidad-derechos"
+            className="rounded-lg border-2 border-dashed border-gold bg-gold/10 p-3 text-ink"
+          >
+            <strong>TODO (Benedy):</strong> indicar cuánto tiempo se conservan
+            los datos, qué buró de crédito se consulta y cómo pedir acceso,
+            corrección o eliminación (canal y plazo de respuesta).
           </p>
           <p>{fraudNotice}</p>
           <p>La aprobación está sujeta a evaluación.</p>

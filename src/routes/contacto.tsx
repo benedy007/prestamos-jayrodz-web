@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ResponsiveImage } from "@/components/responsive-image";
+import { halfColumnSizes, images } from "@/lib/images";
 import { Clock, Instagram, MapPin, Phone } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
@@ -27,6 +29,7 @@ function ContactoPage() {
       <main className="mx-auto grid max-w-6xl gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:py-20">
         <div>
           <SectionHeading
+            as="h1"
             eyebrow="Contacto"
             title="Escríbenos. Te respondemos."
             lede="WhatsApp es el camino más rápido. También puedes llenar la solicitud y te llega el mensaje armado."
@@ -94,8 +97,9 @@ function ContactoPage() {
           </ul>
 
           <p className="mt-6 text-sm text-muted">{site.rncLine}</p>
-          <img
-            src="/images/local.jpg"
+          <ResponsiveImage
+            set={images.local}
+            sizes={halfColumnSizes}
             alt="Local de atención Jayrodz"
             className="mt-10 aspect-wide w-full rounded-xl object-cover"
           />

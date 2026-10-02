@@ -33,6 +33,7 @@ function PreguntasPage() {
     <SiteShell>
       <main className="mx-auto max-w-3xl px-5 py-14 sm:px-8">
         <SectionHeading
+          as="h1"
           eyebrow="Preguntas"
           title="Lo que más nos preguntan."
           lede="Respuestas cortas. Si te queda una duda, escríbenos por WhatsApp."

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PendingRates } from "@/components/pending-rates";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ function PlanesPage() {
       <main>
         <section className="mx-auto max-w-6xl px-5 pb-10 pt-14 sm:px-8">
           <SectionHeading
+            as="h1"
             eyebrow="Planes"
             title="Paga cómodo, semana a semana."
             lede="Dos plazos. Elige el monto, mira la cuota y solicita. Las cifras son las de nuestra tabla vigente."
@@ -47,6 +49,7 @@ function PlanesPage() {
             accent="ink"
             rows={plan13}
           />
+          <PendingRates className="lg:col-span-2" />
         </section>
 
         <section className="border-t border-border bg-paper-2">

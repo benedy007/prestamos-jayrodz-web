@@ -1,4 +1,5 @@
-const KEY = "jayrodz-solicitudes";
+/** Historial que guardaba la versión anterior en localStorage (ahora se borra al cargar). */
+export const LEGACY_HISTORY_KEY = "jayrodz-solicitudes";
 
 export type PersonalRef = {
   name: string;
@@ -43,30 +44,22 @@ export type LoanApplication = {
   weekly: number;
   total: number;
   notes: string;
+  /** Momento en que la persona marcó la autorización (Ley 172-13 / buró). */
+  consentAt: string;
   createdAt: string;
 };
 
-export function loadApplications(): LoanApplication[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as LoanApplication[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveApplication(
+/**
+ * Arma la solicitud en memoria para la pantalla de revisión y el mensaje de
+ * WhatsApp. Ya no se guarda historial en el teléfono (antes: hasta 30
+ * solicitudes completas en localStorage, con cédula, GPS y datos de terceros).
+ */
+export function buildApplication(
   input: Omit<LoanApplication, "id" | "createdAt">,
 ): LoanApplication {
-  const application: LoanApplication = {
+  return {
     ...input,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
   };
-  const next = [application, ...loadApplications()].slice(0, 30);
-  localStorage.setItem(KEY, JSON.stringify(next));
-  return application;
 }

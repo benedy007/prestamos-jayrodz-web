@@ -218,7 +218,7 @@ export const steps = [
   {
     n: "02",
     title: "Llena la solicitud",
-    body: "Nombre, teléfono, ciudad y monto. Te toma un minuto.",
+    body: "Tus datos, dirección, trabajo, un garante y una referencia. Te toma unos 5 minutos.",
   },
   {
     n: "03",

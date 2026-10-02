@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { saveApplication, type LoanApplication } from "@/lib/applications";
+import { PendingRates } from "@/components/pending-rates";
+import { buildApplication, LEGACY_HISTORY_KEY, type LoanApplication } from "@/lib/applications";
 import { track, withUtm } from "@/lib/analytics";
 import { OTHER_CITY, OTHER_SECTOR, sectorsFor } from "@/lib/sectors";
 import {
@@ -24,6 +25,45 @@ import {
 import { cn } from "@/lib/utils";
 
 const DRAFT_KEY = "jayrodz-solicitud-borrador";
+
+/**
+ * Borrador solo en sessionStorage: se pierde al cerrar la pestaña y se borra al
+ * enviar por WhatsApp. Nunca en localStorage (persistente y visible para quien
+ * use el mismo teléfono después).
+ */
+const draftStore = {
+  get: () => {
+    try {
+      return sessionStorage.getItem(DRAFT_KEY);
+    } catch {
+      return null;
+    }
+  },
+  set: (value: string) => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, value);
+    } catch {
+      /* almacenamiento lleno o bloqueado: seguimos sin borrador */
+    }
+  },
+  clear: () => {
+    try {
+      sessionStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* noop */
+    }
+  },
+};
+
+/** Elimina lo que dejó guardado la versión anterior del formulario en localStorage. */
+function purgeLegacyStorage() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+    localStorage.removeItem(LEGACY_HISTORY_KEY);
+  } catch {
+    /* noop */
+  }
+}
 const STEP_LABELS = ["Origen", "Dirección", "Trabajo", "Referencias"];
 
 const relations = [
@@ -170,6 +210,12 @@ function validateStep(step: number, data: FormData): { message: string; field: s
   if (plan === 13 && amount < MIN_PLAN13_AMOUNT) {
     return miss("plan", `El plazo de 13 semanas es desde ${formatRD(MIN_PLAN13_AMOUNT)}. Para montos menores usa 10 semanas.`);
   }
+  if (g("consent") !== "si") {
+    return miss(
+      "consent",
+      "Para continuar, marca la autorización para tratar tus datos y consultar el buró de crédito.",
+    );
+  }
   return null;
 }
 
@@ -201,6 +247,9 @@ export function LoanForm() {
   const [missing, setMissing] = useState("");
   const [step, setStep] = useState(0);
   const [saved, setSaved] = useState<LoanApplication | null>(null);
+  const [consent, setConsent] = useState(false);
+  /** true después de pulsar «Enviar por WhatsApp»: ya no se vuelve a guardar borrador. */
+  const sentRef = useRef(false);
   const resultRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -215,8 +264,8 @@ export function LoanForm() {
     const params = new URLSearchParams(window.location.search);
     const ciudad = params.get("ciudad") || "";
     if (!city && cities.some((item) => item.name === ciudad)) setCity(ciudad);
-    const raw =
-      localStorage.getItem(DRAFT_KEY) || sessionStorage.getItem(DRAFT_KEY);
+    purgeLegacyStorage();
+    const raw = draftStore.get();
     if (!raw || !formRef.current) return;
     try {
       const draft = JSON.parse(raw) as Record<string, string>;
@@ -269,17 +318,15 @@ export function LoanForm() {
         if (!el.name || el.value || !draft[el.name]) continue;
         el.value = draft[el.name];
       }
-      localStorage.setItem(DRAFT_KEY, raw);
-      sessionStorage.removeItem(DRAFT_KEY);
     } catch {
-      localStorage.removeItem(DRAFT_KEY);
+      draftStore.clear();
     }
   }, []);
 
   const saveDraftRef = useRef<() => void>(() => {});
   saveDraftRef.current = () => {
     const form = formRef.current;
-    if (!form) return;
+    if (!form || sentRef.current) return;
     const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
     data.step = String(step);
     if (source) data.source = source;
@@ -298,7 +345,7 @@ export function LoanForm() {
       data.workLat = String(workLocation.lat);
       data.workLng = String(workLocation.lng);
     }
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+    draftStore.set(JSON.stringify(data));
   };
 
   useEffect(() => {
@@ -355,7 +402,7 @@ export function LoanForm() {
           data.workLat = String(next.lat);
           data.workLng = String(next.lng);
         }
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        if (!sentRef.current) draftStore.set(JSON.stringify(data));
       },
       () => {
         setLocating("");
@@ -375,6 +422,7 @@ export function LoanForm() {
   }
 
   function onEdit() {
+    sentRef.current = false;
     setSaved(null);
     setStep(0);
     requestAnimationFrame(() => {
@@ -382,6 +430,14 @@ export function LoanForm() {
         .getElementById("formulario")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  }
+
+  /** Al enviar: borrar el borrador de este navegador y no volver a guardarlo. */
+  function onSend() {
+    track("loan_form_whatsapp_redirect");
+    sentRef.current = true;
+    draftStore.clear();
+    purgeLegacyStorage();
   }
 
   function showMissing(problem: { message: string; field: string }) {
@@ -415,6 +471,7 @@ export function LoanForm() {
     if (cedula) data.set("cedula", cedula);
     if (homeMode) data.set("homeMode", homeMode);
     if (workMode) data.set("workMode", workMode);
+    if (consent) data.set("consent", "si");
     const nextSource = read(data, "source");
     const nextSourceName = read(data, "sourceName");
     const nextName = read(data, "name");
@@ -490,7 +547,7 @@ export function LoanForm() {
         : "Cédula";
     const nextDocument = nextIdKind === "Cédula" ? formatCedula(nextCedula) : nextCedula;
 
-    const application = saveApplication({
+    const application = buildApplication({
       source: nextSource,
       sourceName: nextSource === "Una persona" ? nextSourceName : "",
       name: nextName,
@@ -526,6 +583,7 @@ export function LoanForm() {
       weekly: nextWeekly,
       total: totalPay(nextWeekly, nextPlan),
       notes: nextNotes,
+      consentAt: new Date().toISOString(),
     });
     setSaved(application);
   }
@@ -595,6 +653,9 @@ export function LoanForm() {
         `- Nombre: ${saved.guarantor.name}`,
         `- Teléfono: ${formatPhone(saved.guarantor.phone)}`,
         `- Parentesco: ${saved.guarantor.relation}`,
+        "",
+        "*Autorización*",
+        `- Autorizo a ${site.legal} a tratar mis datos personales y a consultar mi historial en el buró de crédito para evaluar esta solicitud (Ley 172-13). Marcado el ${new Date(saved.consentAt).toLocaleString("es-DO", { timeZone: "America/Santo_Domingo" })}`,
       ])
     : "";
 
@@ -635,7 +696,7 @@ export function LoanForm() {
             <Button asChild variant="whatsapp" size="lg">
               <a
                 href={withUtm(waLink(message))}
-                onClick={() => track("loan_form_whatsapp_redirect")}
+                onClick={onSend}
               >
                 Enviar por WhatsApp
               </a>
@@ -720,7 +781,7 @@ export function LoanForm() {
             <Button asChild variant="whatsapp" size="lg">
               <a
                 href={withUtm(waLink(message))}
-                onClick={() => track("loan_form_whatsapp_redirect")}
+                onClick={onSend}
               >
                 Enviar por WhatsApp
               </a>
@@ -743,7 +804,7 @@ export function LoanForm() {
           if (source) data.source = source;
           if (homeMode) data.homeMode = homeMode;
           if (workMode) data.workMode = workMode;
-          localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+          if (!sentRef.current) draftStore.set(JSON.stringify(data));
         }}
         className={
           saved
@@ -1561,6 +1622,14 @@ export function LoanForm() {
           <Stat label="Plazo" value={`${plan} semanas`} />
           <Stat label="Total a pagar" value={formatRD(total)} />
         </div>
+        <PendingRates className="mt-4" />
+        <ConsentField
+          checked={consent}
+          onChange={(next) => {
+            setConsent(next);
+            setMissing((current) => (current === "consent" ? "" : current));
+          }}
+        />
         </div>
 
         {error ? (
@@ -1592,13 +1661,63 @@ export function LoanForm() {
             {step < 3 ? "Siguiente" : "Revisar solicitud"}
           </Button>
         </div>
-        <p className="mt-3 text-xs text-subtle">
+        <p className="mt-3 text-sm text-muted">
           {site.rncLine}. El WhatsApp solo se abre cuando toda la información
           está completa y la revisas. La aprobación está sujeta a evaluación.
         </p>
       </form>
     </>
     </MissingContext.Provider>
+  );
+}
+
+function ConsentField({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  const missing = useContext(MissingContext) === "consent";
+  return (
+    <div
+      className={cn(
+        "mt-6 rounded-xl border p-4",
+        missing ? "border-red bg-red/5" : "border-border-strong bg-paper",
+      )}
+    >
+      <label
+        htmlFor="consent"
+        className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-ink"
+      >
+        <input
+          id="consent"
+          name="consent"
+          type="checkbox"
+          value="si"
+          required
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-invalid={missing || undefined}
+          aria-describedby={missing ? "form-error" : undefined}
+          className="mt-0.5 size-5 shrink-0 accent-green"
+        />
+        <span>
+          Autorizo a {site.legal} a tratar mis datos personales y a consultar mi
+          historial en el buró de crédito para evaluar esta solicitud, conforme
+          a la Ley 172-13. He leído la{" "}
+          <a
+            href="/privacidad"
+            target="_blank"
+            rel="noopener"
+            className="font-medium text-green underline underline-offset-2"
+          >
+            política de privacidad
+          </a>
+          . <span className="text-muted">(Obligatorio)</span>
+        </span>
+      </label>
+    </div>
   );
 }
 

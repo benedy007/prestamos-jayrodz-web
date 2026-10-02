@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ResponsiveImage } from "@/components/responsive-image";
+import { halfColumnSizes, images } from "@/lib/images";
 import { MapPin } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
@@ -21,14 +23,18 @@ function CoberturaPage() {
     <SiteShell>
       <main>
         <section className="relative overflow-hidden">
-          <img
-            src="/images/pueblo.jpg"
+          <ResponsiveImage
+            set={images.pueblo}
+            mobile={images.puebloMovil}
+            sizes="100vw"
+            priority
             alt="Pueblo dominicano"
             className="absolute inset-0 size-full object-cover"
           />
           <div className="absolute inset-0 bg-ink/60" />
           <div className="relative mx-auto max-w-6xl px-5 py-24 sm:px-8">
             <SectionHeading
+              as="h1"
               invert
               eyebrow="Cobertura"
               title="Estamos cerca de ti."
@@ -84,8 +90,9 @@ function CoberturaPage() {
 
         <section className="border-t border-border">
           <div className="mx-auto grid max-w-6xl gap-8 px-5 py-16 sm:px-8 lg:grid-cols-2">
-            <img
-              src="/images/local.jpg"
+            <ResponsiveImage
+              set={images.local}
+              sizes={halfColumnSizes}
               alt="Oficina local de Jayrodz"
               className="aspect-wide w-full rounded-xl object-cover"
             />

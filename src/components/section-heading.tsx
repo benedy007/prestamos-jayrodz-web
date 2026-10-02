@@ -5,12 +5,15 @@ export function SectionHeading({
   title,
   lede,
   invert = false,
+  as: Heading = "h2",
   className,
 }: {
   eyebrow?: string;
   title: string;
   lede?: string;
   invert?: boolean;
+  /** `h1` para el título principal de la página (uno por página). */
+  as?: "h1" | "h2";
   className?: string;
 }) {
   return (
@@ -25,14 +28,14 @@ export function SectionHeading({
           {eyebrow}
         </p>
       ) : null}
-      <h2
+      <Heading
         className={cn(
           "mt-3 font-display text-section leading-tight tracking-display",
           invert ? "text-paper" : "text-ink",
         )}
       >
         {title}
-      </h2>
+      </Heading>
       {lede ? (
         <p
           className={cn(

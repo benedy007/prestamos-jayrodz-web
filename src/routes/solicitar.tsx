@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ResponsiveImage } from "@/components/responsive-image";
+import { images } from "@/lib/images";
 import { LoanForm } from "@/components/loan-form";
 import { Requirements } from "@/components/requirements";
 import { SectionHeading } from "@/components/section-heading";
@@ -21,6 +23,7 @@ function SolicitarPage() {
       <main className="mx-auto grid max-w-6xl gap-12 px-5 py-14 sm:px-8 lg:grid-cols-2 lg:py-20">
         <div>
           <SectionHeading
+            as="h1"
             eyebrow="Solicitud"
             title="Pide tu préstamo desde aquí."
             lede="Completa el formulario. Al enviarlo te armamos el mensaje para WhatsApp y un asesor te confirma."
@@ -31,8 +34,9 @@ function SolicitarPage() {
         </div>
 
         <aside className="space-y-6 lg:pt-28">
-          <img
-            src="/images/asesora.jpg"
+          <ResponsiveImage
+            set={images.asesora}
+            sizes="(min-width: 1024px) 448px, calc(100vw - 40px)"
             alt="Asesora de Jayrodz"
             className="aspect-portrait w-full max-w-md rounded-xl object-cover"
           />
@@ -49,8 +53,8 @@ function SolicitarPage() {
             </p>
           </div>
           <Requirements compact />
-          <p className="text-xs text-subtle">{site.rncLine}</p>
-          <p className="text-xs text-subtle">{fraudNotice}</p>
+          <p className="text-sm text-muted">{site.rncLine}</p>
+          <p className="text-sm text-muted">{fraudNotice}</p>
         </aside>
       </main>
     </SiteShell>
