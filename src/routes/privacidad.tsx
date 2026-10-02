@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
-import { fraudNotice, pageHead, site } from "@/lib/site";
+import { WhatsAppLink } from "@/components/whatsapp-link";
+import { fraudNotice, pageHead, privacyWaMessage, site } from "@/lib/site";
 
 const description =
   "Jayrodz usa la cédula solo para depurar el crédito. No pedimos depósitos, claves ni códigos.";
@@ -44,13 +45,25 @@ function PrivacidadPage() {
             pierdas si cambias de pantalla. Se borran al enviar la solicitud por
             WhatsApp o al cerrar la pestaña.
           </p>
-          <p
-            data-todo="privacidad-derechos"
-            className="rounded-lg border-2 border-dashed border-gold bg-gold/10 p-3 text-ink"
-          >
-            <strong>TODO (Benedy):</strong> indicar cuánto tiempo se conservan
-            los datos, qué buró de crédito se consulta y cómo pedir acceso,
-            corrección o eliminación (canal y plazo de respuesta).
+          <p>
+            Para evaluar tu solicitud consultamos tu historial crediticio a
+            través de nuestro sistema {site.creditSystem}, conectado a un buró de
+            crédito.
+          </p>
+          <p>
+            Conservamos tus datos mientras el préstamo esté vigente, es decir,
+            mientras exista la deuda.
+          </p>
+          <p>
+            Puedes pedir acceso, corrección o eliminación de tus datos
+            escribiéndonos por WhatsApp al{" "}
+            <WhatsAppLink
+              message={privacyWaMessage}
+              className="font-medium text-green underline underline-offset-2"
+            >
+              {site.phoneDisplay}
+            </WhatsAppLink>
+            . Te respondemos por el mismo medio.
           </p>
           <p>{fraudNotice}</p>
           <p>La aprobación está sujeta a evaluación.</p>

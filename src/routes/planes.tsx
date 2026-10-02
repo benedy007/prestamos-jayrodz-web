@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PendingRates } from "@/components/pending-rates";
+import { LoanCost } from "@/components/loan-cost";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ function PlanesPage() {
             accent="ink"
             rows={plan13}
           />
-          <PendingRates className="lg:col-span-2" />
+          <LoanCost className="lg:col-span-2" />
         </section>
 
         <section className="border-t border-border bg-paper-2">

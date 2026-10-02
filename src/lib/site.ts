@@ -11,6 +11,8 @@ export const site = {
   instagramHref: "https://instagram.com/prestamos.jayrodz",
   slogan: "Tu confianza, nuestro compromiso",
   rnc: "132759542",
+  /** Sistema propio de Jayrodz que se conecta a un buró de crédito externo (no nombrar el buró). */
+  creditSystem: "SisCrub",
   rncLine: "Jayrodz & Asociados S.R.L. · RNC 132759542",
   url: "https://prestamos-jayrodz.grok.me",
 };
@@ -81,6 +83,9 @@ export function pageHead(path: string, title: string, description: string) {
 export function waLink(message: string) {
   return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message)}`;
 }
+
+export const privacyWaMessage =
+  "Hola, quiero pedir acceso, corrección o eliminación de mis datos personales en JAYRODZ & ASOCIADOS SRL.";
 
 export const defaultWaMessage =
   "Hola, quiero información sobre préstamos semanales de JAYRODZ & ASOCIADOS SRL.";

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PendingRates } from "@/components/pending-rates";
+import { LoanCost } from "@/components/loan-cost";
 import { buildApplication, LEGACY_HISTORY_KEY, type LoanApplication } from "@/lib/applications";
 import { track, withUtm } from "@/lib/analytics";
 import { OTHER_CITY, OTHER_SECTOR, sectorsFor } from "@/lib/sectors";
@@ -1622,7 +1622,7 @@ export function LoanForm() {
           <Stat label="Plazo" value={`${plan} semanas`} />
           <Stat label="Total a pagar" value={formatRD(total)} />
         </div>
-        <PendingRates className="mt-4" />
+        <LoanCost className="mt-4" />
         <ConsentField
           checked={consent}
           onChange={(next) => {
