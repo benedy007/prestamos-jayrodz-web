@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/planes",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Planes · Jayrodz",
+      "hasCanvas": false,
+      "bodyTextLen": 1572,
+      "bodyTextHash": "f26c897c6bca90d4448578c3ae1247b601113d6eb00dd9de7325a38e50f67d16",
+      "bodyTextPrefix": "Jayrodz & ASOCIADOS Planes Cobertura Contacto Solicitar préstamo",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/planes.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Planes · Jayrodz",
+      "hasCanvas": false,
+      "bodyTextLen": 1515,
+      "bodyTextHash": "a265c907ba6e7139ff64fd631575b8c506f871f1367985254676c8b2f1e1550e",
+      "bodyTextPrefix": "Jayrodz PLANES Paga cómodo, semana a semana. Dos plazos. Elige e",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/planes-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/planes.json"
+}

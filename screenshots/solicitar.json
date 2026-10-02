@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/solicitar",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Solicitar préstamo · Jayrodz",
+      "hasCanvas": false,
+      "bodyTextLen": 1501,
+      "bodyTextHash": "a56c42eaa2a40e1f1a17d3fbe0cf880af11aa53be026220e93fdfd956a2085eb",
+      "bodyTextPrefix": "Jayrodz & ASOCIADOS Planes Cobertura Contacto Solicitar préstamo",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/solicitar.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Solicitar préstamo · Jayrodz",
+      "hasCanvas": false,
+      "bodyTextLen": 1444,
+      "bodyTextHash": "5d68ce74db5013f96fa2848b8ad7c7b8b7501737fbdc966c5c115ff91c9a9eea",
+      "bodyTextPrefix": "Jayrodz SOLICITUD Pide tu préstamo desde aquí. Completa el formu",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/solicitar-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/solicitar.json"
+}

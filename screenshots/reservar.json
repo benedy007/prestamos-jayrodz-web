@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/reservar",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Reservar · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 1340,
+      "bodyTextHash": "f46810948e782aaa2d2e05175317f7725ad6b71a48d026bd1d32c2274a0cf664",
+      "bodyTextPrefix": "Oliva Carta La casa Contacto Reservar mesa RESERVAS Anotad vuest",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/reservar.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Reservar · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 1303,
+      "bodyTextHash": "5e69f5f247e0d57d07ac708be84139a744031b7fbad1239d0606d14de2a7d751",
+      "bodyTextPrefix": "Oliva RESERVAS Anotad vuestra mesa. Respondemos al momento en es",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/reservar-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/reservar.json"
+}

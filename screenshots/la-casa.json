@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/la-casa",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "La casa · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 1428,
+      "bodyTextHash": "50cd0436e1239cede0b87c44e474dfe8d53bb2c82466eac4493748e2043f89f1",
+      "bodyTextPrefix": "Oliva Carta La casa Contacto Reservar mesa LA CASA Un comedor pe",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/la-casa.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "La casa · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 1391,
+      "bodyTextHash": "83738eba61de7e7a669d6b8a112c908569fb3b8bd016813cc42aaf309a116d10",
+      "bodyTextPrefix": "Oliva LA CASA Un comedor pequeño con una idea grande: el aceite ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/la-casa-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/la-casa.json"
+}

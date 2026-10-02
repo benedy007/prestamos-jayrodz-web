@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Jayrodz",
+      "hasCanvas": false,
+      "bodyTextLen": 1717,
+      "bodyTextHash": "7319e82ab7469e35d5d8bfb27f08e5ea7ef5b6c3d1b8dcec657a5a88aee2d642",
+      "bodyTextPrefix": "Jayrodz & ASOCIADOS Planes Cobertura Contacto Solicitar préstamo",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Jayrodz",
+      "hasCanvas": false,
+      "bodyTextLen": 1660,
+      "bodyTextHash": "5f2576f49076af4e055d30e4a35730559137502c4e6ea7b2aad29e19bf2a705d",
+      "bodyTextPrefix": "Jayrodz JAYRODZ & ASOCIADOS S.R.L. · REPÚBLICA DOMINICANA Présta",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}

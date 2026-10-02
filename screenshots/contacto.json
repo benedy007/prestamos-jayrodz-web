@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/contacto",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Contacto · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 978,
+      "bodyTextHash": "8a9007f10f035cc932f1b913befee727e0d1e2dad11404c6741adccf458200fc",
+      "bodyTextPrefix": "Oliva Carta La casa Contacto Reservar mesa CONTACTO Venid, llama",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/contacto.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Contacto · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 941,
+      "bodyTextHash": "4265c7d2a952bf101cd66243cdd987a2ca9b228b58b9614f7147b2eeaa47bf06",
+      "bodyTextPrefix": "Oliva CONTACTO Venid, llamad o escribid. La puerta está en Jorge",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/contacto-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/contacto.json"
+}

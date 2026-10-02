@@ -1,0 +1,67 @@
+# Implementación — Mejoras P0/P1 sitio Préstamos Jayrodz
+
+## Contexto
+Sitio: https://prestamos-jayrodz.grok.me (también /solicitar, /planes, /cobertura, /contacto)
+Empresa: Jayrodz & Asociados S.R.L., RNC 132759542, República Dominicana.
+Producto: préstamos semanales RD$5,000–100,000; plazos 10 y 13 semanas (13 desde RD$50,000).
+Slogan: «La Solución a Tus Problemas».
+WhatsApp: 829 525 3411 → https://wa.me/18295253411
+Instagram: https://instagram.com/prestamos.jayrodz (mostrar @prestamos.jayrodz).
+Operación: 19 localidades; cobro a domicilio/transferencia; se requiere garante; calendario de rutas (densificar zonas actuales, no inventar ciudades).
+
+## Objetivo
+Subir confianza y conversión del embudo web → WhatsApp, sin romper el flujo de solicitud ni las tablas vigentes. /solicitar califica; WhatsApp cierra.
+
+## Voz de marca
+Español dominicano claro, cercano, sin tecnicismos. Corto y directo. Tú de trato. Evitar «aprobación garantizada». Mantener: «sin vueltas», «pueblo a pueblo», «cuota fija».
+
+## NO tocar / debe conservarse
+- Tel/WhatsApp 829 525 3411 (+18295253411) y enlaces wa.me/tel.
+- Instagram instagram.com/prestamos.jayrodz
+- Cifras de /planes (montos, cuotas, totales).
+- Lista de 19 localidades y notas «Solo centro» / «Cobertura local».
+- Flujo «Revisar solicitud» → mensaje WhatsApp armado.
+- Aviso anti-fraude de /solicitar.
+- Identidad visual (verde #187A38, tipografías, logo).
+
+## Implementar
+
+### P0
+1. Footer + /contacto + cerca del form: «Jayrodz & Asociados S.R.L. · RNC 132759542».
+2. Bloque «Requisitos» en home y resumen en /solicitar: cédula, zona de cobertura, trabajo o negocio, referencias, **garante requerido**.
+3. /solicitar en wizard (1 Origen+personales → 2 Dirección → 3 Trabajo → 4 Referencias+préstamo → 5 Revisar). Progreso, validación por paso, sessionStorage.
+4. Campos de garante (nombre, teléfono, parentesco) o checkbox «Cuento con un garante» + nota de que se pedirán datos al contactar.
+5. CTA secundario en cada paso: «Prefiero escribir por WhatsApp» con datos ya capturados en el mensaje.
+6. Disclaimer anti-fraude también en footer global.
+7. Mensajes wa.me distintos (home genérico; cobertura con ciudad; post-form con resumen).
+
+### P1
+8. FAQ (acordeón): montos/plazos, pago, garante, «solo centro», tiempo de respuesta, documentos, pueblo no listado, anti-fraude.
+9. /cobertura: día(s) de ruta por localidad con datos reales; si no hay dato: «Te confirmamos el día de visita por WhatsApp» (no inventar horarios).
+10. SEO: title/description únicos; rel=canonical; JSON-LD LocalBusiness (nombre, RNC, teléfono, RD, url) + FAQPage.
+11. GA4/dataLayer: eventos whatsapp_click (page_path), loan_form_review, loan_form_whatsapp_redirect; propagar UTM al WA.
+12. Botón flotante WA en móvil (no tapar el submit en /solicitar).
+13. /privacidad: cédula solo para depurar crédito; no depósitos ni claves.
+
+### P2 (si hay tiempo)
+14. Estructura de testimonios; solo texto real aprobado.
+15. Chips de ciudad → /solicitar?ciudad=Baní (preselect).
+16. Unificar display IG a @prestamos.jayrodz.
+
+## Criterios de aceptación
+- [ ] RNC 132759542 en footer de todas las páginas.
+- [ ] Home menciona garante y requisitos sin ambigüedad.
+- [ ] /solicitar multipaso llega a Revisar → WhatsApp con payload completo.
+- [ ] Escape a WhatsApp funciona en cualquier paso.
+- [ ] Tablas /planes idénticas en cifras.
+- [ ] 19 localidades intactas; sin ciudades inventadas.
+- [ ] Tel/WA/IG correctos y clicables.
+- [ ] FAQ publicada y enlazada desde footer.
+- [ ] Flotante WA no tapa el submit en móvil.
+- [ ] Se mantiene «La aprobación está sujeta a evaluación.»
+- [ ] GA4 async; sin scripts pesados innecesarios.
+- [ ] Copy ES-RD, voz de marca respetada.
+- [ ] Sin horarios de ruta inventados.
+
+## Fuera de alcance
+Cambiar motor de crédito, montos/cuotas, scoring, apps nativas o testimonios falsos.

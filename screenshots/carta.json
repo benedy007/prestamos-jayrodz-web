@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/carta",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Carta · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 1715,
+      "bodyTextHash": "a83d7ad8f3c21bedfcb9a00ccf888ddf8ea47f9fe9999369322455c51cfeb532",
+      "bodyTextPrefix": "Oliva Carta La casa Contacto Reservar mesa CARTA Temporada, bras",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/carta.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Carta · Oliva",
+      "hasCanvas": false,
+      "bodyTextLen": 1678,
+      "bodyTextHash": "18166831e3a8262cf6f3bca0f15228b07ac58792dbf778fbeed04bb9643c7954",
+      "bodyTextPrefix": "Oliva CARTA Temporada, brasa y aceite. Cambia cada pocas semanas",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/carta-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/carta.json"
+}
