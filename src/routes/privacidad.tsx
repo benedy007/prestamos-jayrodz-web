@@ -1,4 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
 import { WhatsAppLink } from "@/components/whatsapp-link";
@@ -10,13 +12,31 @@ const description =
 export const Route = createFileRoute("/privacidad")({
   head: () =>
     pageHead("/privacidad", "Privacidad · JAYRODZ & ASOCIADOS SRL", description),
+  /** ?desde=solicitar: llegó desde la casilla de autorización del formulario. */
+  validateSearch: (search: Record<string, unknown>): { desde?: "solicitar" } =>
+    search.desde === "solicitar" ? { desde: "solicitar" } : {},
   component: PrivacidadPage,
 });
 
+/** Vuelve a /solicitar; el formulario restaura el borrador (sessionStorage) y el paso. */
+function BackToForm({ className }: { className?: string }) {
+  return (
+    <Button asChild variant="outline" size="lg" className={className}>
+      <Link to="/solicitar" hash="formulario">
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Volver al formulario
+      </Link>
+    </Button>
+  );
+}
+
 function PrivacidadPage() {
+  const { desde } = Route.useSearch();
+  const fromForm = desde === "solicitar";
   return (
     <SiteShell>
       <main className="mx-auto max-w-3xl px-5 py-14 sm:px-8">
+        {fromForm ? <BackToForm className="mb-8" /> : null}
         <SectionHeading
           as="h1"
           eyebrow="Privacidad"
@@ -46,6 +66,11 @@ function PrivacidadPage() {
             WhatsApp o al cerrar la pestaña.
           </p>
           <p>
+            Si compartes la ubicación de tu casa, el navegador envía solo esas
+            coordenadas a OpenStreetMap (Nominatim) para llenar el pueblo, el
+            sector y la calle. No se envía tu nombre ni otros datos.
+          </p>
+          <p>
             Para evaluar tu solicitud consultamos tu historial crediticio a
             través de nuestro sistema {site.creditSystem}, conectado a un buró de
             crédito.
@@ -68,6 +93,14 @@ function PrivacidadPage() {
           <p>{fraudNotice}</p>
           <p>La aprobación está sujeta a evaluación.</p>
         </div>
+        {fromForm ? (
+          <div className="mt-10">
+            <BackToForm />
+            <p className="mt-3 text-sm text-muted">
+              Lo que ya llenaste sigue guardado en este navegador.
+            </p>
+          </div>
+        ) : null}
       </main>
     </SiteShell>
   );

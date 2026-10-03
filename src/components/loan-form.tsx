@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoanCost } from "@/components/loan-cost";
 import { buildApplication, LEGACY_HISTORY_KEY, type LoanApplication } from "@/lib/applications";
 import { track, withUtm } from "@/lib/analytics";
+import { matchPlace, matchSector, reverseGeocode, type ReverseAddress } from "@/lib/reverse-geocode";
 import { OTHER_CITY, OTHER_SECTOR, sectorsFor } from "@/lib/sectors";
 import {
   cities,
@@ -66,6 +67,11 @@ function purgeLegacyStorage() {
 }
 const STEP_LABELS = ["Origen", "Dirección", "Trabajo", "Referencias"];
 
+/** Opciones de «¿Cómo llegó a la compañía?». */
+const SOURCES = ["Facebook", "Instagram", "Google", "Una persona"];
+
+const GEO_NOTICE = "Llenamos la dirección con tu ubicación. Revísala y escribe el número de casa.";
+
 const relations = [
   "Madre",
   "Padre",
@@ -103,7 +109,7 @@ function validateStep(step: number, data: FormData): { message: string; field: s
   const g = (key: string) => String(data.get(key) ?? "").trim();
   const miss = (field: string, message: string) => ({ field, message });
   if (step === 0) {
-    if (!["Facebook", "Instagram", "Una persona"].includes(g("source"))) {
+    if (!SOURCES.includes(g("source"))) {
       return miss("source", "Elige cómo llegó a la compañía.");
     }
     if (g("source") === "Una persona" && !g("sourceName")) {
@@ -145,6 +151,9 @@ function validateStep(step: number, data: FormData): { message: string; field: s
         return miss("cityOther", "Si eliges Otra, escribe la localidad.");
       }
       if (!g("lat") || !g("lng")) return miss("share-location", "Comparte la ubicación de la vivienda.");
+      if (g("sectorPick") === OTHER_SECTOR && !g("sectorOther")) {
+        return miss("sectorOther", "Si eliges Otro, escribe el sector.");
+      }
       if (!g("house")) return miss("house", "Escribe el número de la casa.");
       if (!g("landmark")) return miss("landmark-location", "Escribe la referencia: frente o al lado de qué queda.");
       return null;
@@ -223,7 +232,7 @@ export function LoanForm() {
   const [source, setSource] = useState("");
   const [sourceName, setSourceName] = useState("");
   const [name, setName] = useState("");
-  const [idKind, setIdKind] = useState("");
+  const [idKind, setIdKind] = useState("Cédula");
   const [cedula, setCedula] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
@@ -252,6 +261,15 @@ export function LoanForm() {
   const sentRef = useRef(false);
   const resultRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  /** Borrador pendiente de aplicar a campos que se muestran después de restaurar. */
+  const pendingDraftRef = useRef<Record<string, string> | null>(null);
+  const [draftPass, setDraftPass] = useState(0);
+  /** Lo último que llenó la ubicación: si el campo sigue igual, no lo editó la persona. */
+  const autoFilledRef = useRef<Partial<Record<"city" | "cityOther" | "sectorPick" | "sectorOther" | "street", string>>>({});
+  const geoAbortRef = useRef<AbortController | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoNotice, setGeoNotice] = useState("");
+  const [addressFill, setAddressFill] = useState(0);
 
   useEffect(() => {
     if (!saved) return;
@@ -263,7 +281,11 @@ export function LoanForm() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ciudad = params.get("ciudad") || "";
-    if (!city && cities.some((item) => item.name === ciudad)) setCity(ciudad);
+    if (!city && cities.some((item) => item.name === ciudad)) {
+      setCity(ciudad);
+      // Viene del enlace de la ciudad (no lo escribió la persona): la ubicación puede corregirlo.
+      autoFilledRef.current = { city: ciudad, cityOther: "" };
+    }
     purgeLegacyStorage();
     const raw = draftStore.get();
     if (!raw || !formRef.current) return;
@@ -305,8 +327,12 @@ export function LoanForm() {
         setPlan(draft.plan === "13" ? 13 : 10);
       }
       if (draft.amount && Number(draft.amount) >= 5000) setAmount(Number(draft.amount));
+      if (draft.consent === "si") setConsent(true);
       const draftStep = Number(draft.step);
       if (draftStep >= 0 && draftStep <= 3) setStep(draftStep);
+      // Los campos que dependen de homeMode/workMode aparecen en el siguiente render.
+      pendingDraftRef.current = draft;
+      setDraftPass(1);
       for (const el of formRef.current.elements) {
         if (
           !(el instanceof HTMLInputElement) &&
@@ -322,6 +348,21 @@ export function LoanForm() {
       draftStore.clear();
     }
   }, []);
+
+  useEffect(() => {
+    const draft = pendingDraftRef.current;
+    const form = formRef.current;
+    if (!draftPass || !draft || !form) return;
+    pendingDraftRef.current = null;
+    for (const el of form.elements) {
+      if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) continue;
+      if (el.type === "hidden" || el.type === "checkbox") continue;
+      if (!el.name || el.value || !draft[el.name]) continue;
+      el.value = draft[el.name];
+    }
+  }, [draftPass]);
+
+  useEffect(() => () => geoAbortRef.current?.abort(), []);
 
   const saveDraftRef = useRef<() => void>(() => {});
   saveDraftRef.current = () => {
@@ -368,7 +409,7 @@ export function LoanForm() {
       return;
     }
     saveDraftRef.current();
-  }, [step, source, sourceName, idKind, homeMode, workMode, location, workLocation]);
+  }, [step, source, sourceName, idKind, homeMode, workMode, location, workLocation, addressFill]);
 
   const canChoose13 = amount >= MIN_PLAN13_AMOUNT;
   const options = optionsFor(plan);
@@ -392,6 +433,7 @@ export function LoanForm() {
         if (target === "home") setLocation(next);
         else setWorkLocation(next);
         setLocating("");
+        if (target === "home") lookupAddress(next);
         const form = formRef.current;
         if (!form) return;
         const data = Object.fromEntries(new FormData(form).entries());
@@ -413,6 +455,73 @@ export function LoanForm() {
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
+
+  /** Una sola consulta a Nominatim por cada vez que se comparte la ubicación. */
+  function lookupAddress(point: { lat: number; lng: number }) {
+    geoAbortRef.current?.abort();
+    const controller = new AbortController();
+    geoAbortRef.current = controller;
+    setGeoNotice("");
+    setGeoBusy(true);
+    void reverseGeocode(point.lat, point.lng, { signal: controller.signal }).then((found) => {
+      if (geoAbortRef.current !== controller) return;
+      geoAbortRef.current = null;
+      setGeoBusy(false);
+      if (found) applyGeoRef.current(found);
+    });
+  }
+
+  /** Rellena pueblo, sector y calle solo si están vacíos o no los editó la persona. */
+  const applyGeoRef = useRef<(found: ReverseAddress) => void>(() => {});
+  applyGeoRef.current = (found) => {
+    const auto = autoFilledRef.current;
+    let filled = false;
+    let nextCity = city;
+    const cityFree = !city || (city === auto.city && cityOther === (auto.cityOther ?? ""));
+    if (found.city && cityFree) {
+      const known = matchPlace(found.city, cities.map((item) => item.name));
+      nextCity = known || OTHER_CITY;
+      const nextOther = known ? "" : found.city;
+      setCity(nextCity);
+      setCityOther(nextOther);
+      auto.city = nextCity;
+      auto.cityOther = nextOther;
+      filled = true;
+    }
+    const list = sectorsFor(nextCity === OTHER_CITY ? "" : nextCity);
+    const sectorStale = Boolean(sectorPick) && !list.includes(sectorPick);
+    const sectorFree =
+      !sectorPick ||
+      sectorStale ||
+      (sectorPick === auto.sectorPick && sectorOther === (auto.sectorOther ?? ""));
+    if (found.sector && sectorFree) {
+      const known = matchSector(found.sector, list.filter((item) => item !== OTHER_SECTOR));
+      const nextPick = known || OTHER_SECTOR;
+      const nextOther = known ? "" : found.sector;
+      setSectorPick(nextPick);
+      setSectorOther(nextOther);
+      auto.sectorPick = nextPick;
+      auto.sectorOther = nextOther;
+      filled = true;
+    } else if (sectorStale) {
+      setSectorPick("");
+      setSectorOther("");
+    }
+    if (found.street && (!street || street === auto.street)) {
+      setStreet(found.street);
+      auto.street = found.street;
+      filled = true;
+    }
+    if (!filled) return;
+    setGeoNotice(GEO_NOTICE);
+    setAddressFill((n) => n + 1);
+    window.setTimeout(() => {
+      const houseInput = document.getElementById("house");
+      if (!(houseInput instanceof HTMLInputElement) || houseInput.offsetParent === null) return;
+      houseInput.scrollIntoView({ behavior: "smooth", block: "center" });
+      houseInput.focus({ preventScroll: true });
+    }, 80);
+  };
 
   function onCityChange(next: string) {
     setCity(next);
@@ -895,6 +1004,28 @@ export function LoanForm() {
               </button>
               <button
                 type="button"
+                onPointerDown={() => {
+                  setSource("Google");
+                  setSourceName("");
+                }}
+                onClick={() => {
+                  setSource("Google");
+                  setSourceName("");
+                }}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors duration-150 touch-manipulation",
+                  source === "Google"
+                    ? "border-[#1967D2] bg-[#1967D2] text-white"
+                    : "border-[#747775]/50 bg-paper text-[#1F1F1F] pointer-fine:hover:border-[#1967D2] pointer-fine:hover:bg-[#E8F0FE]",
+                )}
+              >
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-white">
+                  <GoogleG className="size-3.5" />
+                </span>
+                Google
+              </button>
+              <button
+                type="button"
                 onPointerDown={() => setSource("Una persona")}
                 onClick={() => setSource("Una persona")}
                 className={cn(
@@ -1221,7 +1352,7 @@ export function LoanForm() {
           <Field
             label="Ciudad"
             htmlFor="city"
-            hint="Aunque compartas la ubicación, elige el pueblo. Si no sale, usa Otra."
+            hint="Al compartir la ubicación la llenamos por ti; revísala. Si tu pueblo no sale, usa Otra."
           >
             <Select
               id="city"
@@ -1274,8 +1405,68 @@ export function LoanForm() {
               {location ? (
                 <p className="text-sm text-green">Ubicación recibida.</p>
               ) : null}
+              {geoBusy ? (
+                <p className="text-sm text-muted" role="status">
+                  Buscando la dirección…
+                </p>
+              ) : null}
+              {geoNotice ? (
+                <p
+                  className="rounded-md border border-green/30 bg-paper-2 px-3 py-2 text-sm text-ink"
+                  role="status"
+                >
+                  {geoNotice}
+                </p>
+              ) : null}
             </Field>
           </div>
+          {location || sectorPick || street ? (
+            <>
+              <Field
+                label="Sector (opcional)"
+                htmlFor="sectorPick"
+                optional
+                hint="Si no aparece, usa Otro."
+              >
+                <Select
+                  id="sectorPick"
+                  name="sectorPick"
+                  value={sectorPick}
+                  onChange={(e) => setSectorPick(e.target.value)}
+                  disabled={!city}
+                >
+                  <option value="">
+                    {city ? "Elige el sector" : "Primero elige la ciudad"}
+                  </option>
+                  {sectorOptions.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              {sectorPick === OTHER_SECTOR ? (
+                <Field label="Escribe el sector" htmlFor="sectorOther">
+                  <Input
+                    id="sectorOther"
+                    name="sectorOther"
+                    value={sectorOther}
+                    onChange={(e) => setSectorOther(e.target.value)}
+                    placeholder="Nombre del barrio"
+                  />
+                </Field>
+              ) : null}
+              <Field label="Calle (opcional)" htmlFor="street" optional>
+                <Input
+                  id="street"
+                  name="street"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder="Calle Duarte"
+                />
+              </Field>
+            </>
+          ) : null}
           <Field label="Número de la casa" htmlFor="house">
             <Input
               id="house"
@@ -1629,6 +1820,7 @@ export function LoanForm() {
             setConsent(next);
             setMissing((current) => (current === "consent" ? "" : current));
           }}
+          onOpenPrivacy={() => saveDraftRef.current()}
         />
         </div>
 
@@ -1674,9 +1866,11 @@ export function LoanForm() {
 function ConsentField({
   checked,
   onChange,
+  onOpenPrivacy,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
+  onOpenPrivacy: () => void;
 }) {
   const missing = useContext(MissingContext) === "consent";
   return (
@@ -1707,9 +1901,8 @@ function ConsentField({
           historial en el buró de crédito para evaluar esta solicitud, conforme
           a la Ley 172-13. He leído la{" "}
           <a
-            href="/privacidad"
-            target="_blank"
-            rel="noopener"
+            href="/privacidad?desde=solicitar"
+            onClick={onOpenPrivacy}
             className="font-medium text-green underline underline-offset-2"
           >
             política de privacidad
@@ -1787,5 +1980,17 @@ function Row({ label, value }: { label: string; value: string }) {
       </dt>
       <dd className="mt-1 text-ink">{value}</dd>
     </div>
+  );
+}
+
+/** «G» de Google en sus cuatro colores (decorativa: el botón ya dice «Google»). */
+function GoogleG({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" focusable="false">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
   );
 }
