@@ -3,8 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Costo y mora informados por Benedy (2026-10-02). Ley 358-05, art. 53.
- * OJO: la tabla de 13 semanas de `src/lib/site.ts` da 40,4 % (no 40 %);
- * pendiente de que Benedy decida si se ajusta la tabla o este texto.
+ * Tabla oficial confirmada por Benedy: 10 semanas = 40 %, 13 semanas = 40,4 %.
  */
 export function LoanCost({ className }: { className?: string }) {
   return (
@@ -18,7 +17,8 @@ export function LoanCost({ className }: { className?: string }) {
       <div className="space-y-1">
         <p>
           <strong className="font-semibold">Costo del préstamo:</strong> 40% del monto
-          prestado, pagadero en 10 o 13 cuotas semanales.
+          prestado, a pagar en 10 cuotas semanales, o 40,4% a pagar en 13 cuotas
+          semanales.
         </p>
         <p>
           <strong className="font-semibold">Mora:</strong> 10% del monto atrasado por cada
