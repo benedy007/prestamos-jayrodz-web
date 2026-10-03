@@ -856,8 +856,8 @@ export function LoanForm() {
                 className={cn(
                   "rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors duration-150 touch-manipulation",
                   source === "Facebook"
-                    ? "border-[#1877F2] bg-[#1877F2] text-white"
-                    : "border-[#1877F2]/40 bg-paper text-[#1877F2] pointer-fine:hover:border-[#1877F2] pointer-fine:hover:bg-[#1877F2] pointer-fine:hover:text-white",
+                    ? "border-[#1877F2] bg-[#1464D2] text-white"
+                    : "border-[#1877F2]/40 bg-paper text-[#1464D2] pointer-fine:hover:border-[#1877F2] pointer-fine:hover:bg-[#1464D2] pointer-fine:hover:text-white",
                 )}
               >
                 Facebook
