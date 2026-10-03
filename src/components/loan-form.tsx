@@ -146,11 +146,11 @@ function validateStep(step: number, data: FormData): { message: string; field: s
   if (step === 1) {
     const mode = g("homeMode");
     if (mode === "location") {
+      if (!g("lat") || !g("lng")) return miss("share-location", "Comparte la ubicación de la vivienda.");
       if (!g("city")) return miss("city", "Elige el pueblo.");
       if (g("city") === OTHER_CITY && !g("cityOther")) {
         return miss("cityOther", "Si eliges Otra, escribe la localidad.");
       }
-      if (!g("lat") || !g("lng")) return miss("share-location", "Comparte la ubicación de la vivienda.");
       if (g("sectorPick") === OTHER_SECTOR && !g("sectorOther")) {
         return miss("sectorOther", "Si eliges Otro, escribe el sector.");
       }
@@ -264,8 +264,8 @@ export function LoanForm() {
   /** Borrador pendiente de aplicar a campos que se muestran después de restaurar. */
   const pendingDraftRef = useRef<Record<string, string> | null>(null);
   const [draftPass, setDraftPass] = useState(0);
-  /** Lo último que llenó la ubicación: si el campo sigue igual, no lo editó la persona. */
-  const autoFilledRef = useRef<Partial<Record<"city" | "cityOther" | "sectorPick" | "sectorOther" | "street", string>>>({});
+  /** Campos que la persona cambió a mano después de cargar la página: la ubicación no los toca. */
+  const editedRef = useRef({ city: false, sector: false, street: false });
   const geoAbortRef = useRef<AbortController | null>(null);
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoNotice, setGeoNotice] = useState("");
@@ -279,13 +279,7 @@ export function LoanForm() {
   }, [saved]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const ciudad = params.get("ciudad") || "";
-    if (!city && cities.some((item) => item.name === ciudad)) {
-      setCity(ciudad);
-      // Viene del enlace de la ciudad (no lo escribió la persona): la ubicación puede corregirlo.
-      autoFilledRef.current = { city: ciudad, cityOther: "" };
-    }
+    // El pueblo no se preselecciona (ni con ?ciudad=): lo elige la ubicación o la persona.
     purgeLegacyStorage();
     const raw = draftStore.get();
     if (!raw || !formRef.current) return;
@@ -433,6 +427,8 @@ export function LoanForm() {
         if (target === "home") setLocation(next);
         else setWorkLocation(next);
         setLocating("");
+        const sharedField = target === "home" ? "share-location" : "share-work-location";
+        setMissing((current) => (current === sharedField ? "" : current));
         if (target === "home") lookupAddress(next);
         const form = formRef.current;
         if (!form) return;
@@ -471,45 +467,37 @@ export function LoanForm() {
     });
   }
 
-  /** Rellena pueblo, sector y calle solo si están vacíos o no los editó la persona. */
+  /**
+   * La ubicación manda: rellena (o actualiza al volver a compartir) pueblo, sector y
+   * calle, salvo lo que la persona haya cambiado a mano después de cargar la página.
+   */
   const applyGeoRef = useRef<(found: ReverseAddress) => void>(() => {});
   applyGeoRef.current = (found) => {
-    const auto = autoFilledRef.current;
+    const edited = editedRef.current;
     let filled = false;
     let nextCity = city;
-    const cityFree = !city || (city === auto.city && cityOther === (auto.cityOther ?? ""));
-    if (found.city && cityFree) {
+    if (found.city && !edited.city) {
       const known = matchPlace(found.city, cities.map((item) => item.name));
       nextCity = known || OTHER_CITY;
-      const nextOther = known ? "" : found.city;
       setCity(nextCity);
-      setCityOther(nextOther);
-      auto.city = nextCity;
-      auto.cityOther = nextOther;
+      setCityOther(known ? "" : found.city);
       filled = true;
     }
-    const list = sectorsFor(nextCity === OTHER_CITY ? "" : nextCity);
-    const sectorStale = Boolean(sectorPick) && !list.includes(sectorPick);
-    const sectorFree =
-      !sectorPick ||
-      sectorStale ||
-      (sectorPick === auto.sectorPick && sectorOther === (auto.sectorOther ?? ""));
-    if (found.sector && sectorFree) {
-      const known = matchSector(found.sector, list.filter((item) => item !== OTHER_SECTOR));
-      const nextPick = known || OTHER_SECTOR;
-      const nextOther = known ? "" : found.sector;
-      setSectorPick(nextPick);
-      setSectorOther(nextOther);
-      auto.sectorPick = nextPick;
-      auto.sectorOther = nextOther;
-      filled = true;
-    } else if (sectorStale) {
-      setSectorPick("");
-      setSectorOther("");
+    if (!edited.sector) {
+      const list = sectorsFor(nextCity === OTHER_CITY ? "" : nextCity);
+      if (found.sector) {
+        const known = matchSector(found.sector, list.filter((item) => item !== OTHER_SECTOR));
+        setSectorPick(known || OTHER_SECTOR);
+        setSectorOther(known ? "" : found.sector);
+        filled = true;
+      } else if (nextCity !== city || (sectorPick && !list.includes(sectorPick))) {
+        // Cambió el pueblo y no hay sector nuevo: el anterior ya no aplica.
+        setSectorPick("");
+        setSectorOther("");
+      }
     }
-    if (found.street && (!street || street === auto.street)) {
+    if (found.street && !edited.street) {
       setStreet(found.street);
-      auto.street = found.street;
       filled = true;
     }
     if (!filled) return;
@@ -523,7 +511,9 @@ export function LoanForm() {
     }, 80);
   };
 
+  /** Cambio de pueblo hecho a mano en el select. */
   function onCityChange(next: string) {
+    editedRef.current.city = true;
     setCity(next);
     setCityOther("");
     setSectorPick("");
@@ -1229,7 +1219,7 @@ export function LoanForm() {
               value={city}
               onChange={(e) => onCityChange(e.target.value)}
             >
-              <option value="">Elige tu ciudad</option>
+              <option value="">Elige tu pueblo</option>
               {cities.map((c) => (
                 <option key={c.name} value={c.name}>
                   {c.name}
@@ -1245,7 +1235,10 @@ export function LoanForm() {
                 id="cityOther"
                 name="cityOther"
                 value={cityOther}
-                onChange={(e) => setCityOther(e.target.value)}
+                onChange={(e) => {
+                  editedRef.current.city = true;
+                  setCityOther(e.target.value);
+                }}
                 placeholder="Ej. Payita"
               />
             </Field>
@@ -1259,11 +1252,14 @@ export function LoanForm() {
               id="sectorPick"
               name="sectorPick"
               value={sectorPick}
-              onChange={(e) => setSectorPick(e.target.value)}
+              onChange={(e) => {
+                editedRef.current.sector = true;
+                setSectorPick(e.target.value);
+              }}
               disabled={!city}
             >
               <option value="">
-                {city ? "Elige el sector" : "Primero elige la ciudad"}
+                {city ? "Elige el sector" : "Primero elige el pueblo"}
               </option>
               {sectorOptions.map((item) => (
                 <option key={item} value={item}>
@@ -1279,7 +1275,10 @@ export function LoanForm() {
                   id="sectorOther"
                   name="sectorOther"
                   value={sectorOther}
-                  onChange={(e) => setSectorOther(e.target.value)}
+                  onChange={(e) => {
+                    editedRef.current.sector = true;
+                    setSectorOther(e.target.value);
+                  }}
                   placeholder="Nombre del barrio"
                 />
               </Field>
@@ -1290,7 +1289,10 @@ export function LoanForm() {
               id="street"
               name="street"
               value={street}
-              onChange={(e) => setStreet(e.target.value)}
+              onChange={(e) => {
+                editedRef.current.street = true;
+                setStreet(e.target.value);
+              }}
               placeholder="Calle Duarte"
             />
           </Field>
@@ -1349,44 +1351,15 @@ export function LoanForm() {
           ) : null}
           {homeMode === "location" ? (
             <>
-          <Field
-            label="Ciudad"
-            htmlFor="city"
-            hint="Al compartir la ubicación la llenamos por ti; revísala. Si tu pueblo no sale, usa Otra."
-          >
-            <Select
-              id="city"
-              name="city"
-              value={city}
-              onChange={(e) => onCityChange(e.target.value)}
-            >
-              <option value="">Elige tu ciudad</option>
-              {cities.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                  {c.centroOnly ? " (solo centro)" : ""}
-                </option>
-              ))}
-              <option value={OTHER_CITY}>Otra (localidad aledaña)</option>
-            </Select>
-          </Field>
-          {city === OTHER_CITY ? (
-            <Field label="Escribe la localidad" htmlFor="cityOther">
-              <Input
-                id="cityOther"
-                name="cityOther"
-                value={cityOther}
-                onChange={(e) => setCityOther(e.target.value)}
-                placeholder="Ej. Payita"
-              />
-            </Field>
-          ) : null}
           <div className="sm:col-span-2">
             <Field
               label="Ubicación de la vivienda"
               htmlFor="share-location"
-              hint="Compártela desde la vivienda. Después indica el número y la referencia."
             >
+              <p className="mb-3 text-sm text-ink">
+                Comparte tu ubicación desde la casa y llenamos el pueblo, el sector y la
+                calle. Solo escribes el número de casa.
+              </p>
               <input type="hidden" name="lat" value={location?.lat ?? ""} />
               <input type="hidden" name="lng" value={location?.lng ?? ""} />
               <Button
@@ -1420,53 +1393,93 @@ export function LoanForm() {
               ) : null}
             </Field>
           </div>
-          {location || sectorPick || street ? (
-            <>
-              <Field
-                label="Sector (opcional)"
-                htmlFor="sectorPick"
-                optional
-                hint="Si no aparece, usa Otro."
-              >
-                <Select
-                  id="sectorPick"
-                  name="sectorPick"
-                  value={sectorPick}
-                  onChange={(e) => setSectorPick(e.target.value)}
-                  disabled={!city}
-                >
-                  <option value="">
-                    {city ? "Elige el sector" : "Primero elige la ciudad"}
-                  </option>
-                  {sectorOptions.map((item) => (
-                    <option key={item} value={item}>
-                      {item}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              {sectorPick === OTHER_SECTOR ? (
-                <Field label="Escribe el sector" htmlFor="sectorOther">
-                  <Input
-                    id="sectorOther"
-                    name="sectorOther"
-                    value={sectorOther}
-                    onChange={(e) => setSectorOther(e.target.value)}
-                    placeholder="Nombre del barrio"
-                  />
-                </Field>
-              ) : null}
-              <Field label="Calle (opcional)" htmlFor="street" optional>
-                <Input
-                  id="street"
-                  name="street"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                  placeholder="Calle Duarte"
-                />
-              </Field>
-            </>
+          <Field
+            label="Pueblo o ciudad"
+            htmlFor="city"
+            hint="Se elige solo al compartir la ubicación. Si no la compartes, elígelo aquí. Si tu pueblo no sale, usa Otra."
+          >
+            <Select
+              id="city"
+              name="city"
+              value={city}
+              onChange={(e) => onCityChange(e.target.value)}
+            >
+              <option value="">Elige tu pueblo</option>
+              {cities.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name}
+                  {c.centroOnly ? " (solo centro)" : ""}
+                </option>
+              ))}
+              <option value={OTHER_CITY}>Otra (localidad aledaña)</option>
+            </Select>
+          </Field>
+          {city === OTHER_CITY ? (
+            <Field label="Escribe la localidad" htmlFor="cityOther">
+              <Input
+                id="cityOther"
+                name="cityOther"
+                value={cityOther}
+                onChange={(e) => {
+                  editedRef.current.city = true;
+                  setCityOther(e.target.value);
+                }}
+                placeholder="Ej. Payita"
+              />
+            </Field>
           ) : null}
+          <Field
+            label="Sector (opcional)"
+            htmlFor="sectorPick"
+            optional
+            hint="Si no aparece, usa Otro."
+          >
+            <Select
+              id="sectorPick"
+              name="sectorPick"
+              value={sectorPick}
+              onChange={(e) => {
+                editedRef.current.sector = true;
+                setSectorPick(e.target.value);
+              }}
+              disabled={!city}
+            >
+              <option value="">
+                {city ? "Elige el sector" : "Primero elige el pueblo"}
+              </option>
+              {sectorOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          {sectorPick === OTHER_SECTOR ? (
+            <Field label="Escribe el sector" htmlFor="sectorOther">
+              <Input
+                id="sectorOther"
+                name="sectorOther"
+                value={sectorOther}
+                onChange={(e) => {
+                    editedRef.current.sector = true;
+                    setSectorOther(e.target.value);
+                  }}
+                placeholder="Nombre del barrio"
+              />
+            </Field>
+          ) : null}
+          <Field label="Calle (opcional)" htmlFor="street" optional>
+            <Input
+              id="street"
+              name="street"
+              value={street}
+              onChange={(e) => {
+                editedRef.current.street = true;
+                setStreet(e.target.value);
+              }}
+              placeholder="Calle Duarte"
+            />
+          </Field>
           <Field label="Número de la casa" htmlFor="house">
             <Input
               id="house"
