@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ResponsiveImage } from "@/components/responsive-image";
 import { halfColumnSizes, images } from "@/lib/images";
-import { Clock, Shield, House, Handshake } from "lucide-react";
+import { Clock, Shield, House, Handshake, MapPin, Table2 } from "lucide-react";
 import { Requirements } from "@/components/requirements";
 import { SectionHeading } from "@/components/section-heading";
 import { SiteShell } from "@/components/site-shell";
@@ -55,7 +55,7 @@ function Home() {
   return (
     <SiteShell>
       <main>
-        <section className="relative min-h-svh overflow-hidden">
+        <section className="relative min-h-[calc(100svh-4rem)] overflow-hidden">
           <ResponsiveImage
             set={images.hero}
             mobile={images.heroMovil}
@@ -65,7 +65,7 @@ function Home() {
             className="absolute inset-0 size-full object-cover"
           />
           <div className="absolute inset-0 bg-ink/60" />
-          <div className="relative mx-auto flex min-h-svh max-w-6xl flex-col justify-end px-5 pb-16 pt-28 sm:px-8 sm:pb-20">
+          <div className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-6xl flex-col justify-end px-5 pb-24 pt-24 sm:px-8 sm:pb-20">
             <div className="hero-copy max-w-2xl text-paper">
               <p className="text-kicker font-medium uppercase tracking-kicker text-paper/70">
                 {site.legal} · {site.country}
@@ -77,14 +77,34 @@ function Home() {
                 {site.tagline}. De {from} a {to}. Aprobación rápida, total
                 discreción y pago cómodo semana a semana.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
                 <Button asChild variant="cream" size="lg">
                   <Link to="/solicitar">Llenar formulario</Link>
                 </Button>
                 <Button asChild variant="whatsapp" size="lg">
                   <WhatsAppLink message={defaultWaMessage}>
-                    WhatsApp {site.phoneDisplay}
+                    WhatsApp
                   </WhatsAppLink>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-auto min-h-12 gap-2 whitespace-normal border border-paper/50 bg-ink/30 px-3 py-2 text-center leading-tight text-paper hover:bg-paper/15"
+                >
+                  <Link to="/cobertura">
+                    <MapPin className="size-4 shrink-0" aria-hidden="true" />
+                    Localidades disponibles
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-auto min-h-12 gap-2 whitespace-normal border border-paper/50 bg-ink/30 px-3 py-2 text-center leading-tight text-paper hover:bg-paper/15"
+                >
+                  <Link to="/planes">
+                    <Table2 className="size-4 shrink-0" aria-hidden="true" />
+                    Tabla de cuotas
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -152,7 +172,7 @@ function Home() {
                 title="Tablas claras. Cuota fija."
                 lede="Elige 10 o 13 semanas. Ves el monto, la cuota semanal y el total antes de pedir. Sin letra chiquita escondida."
               />
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
                 <Button asChild>
                   <Link to="/planes">Ver tablas</Link>
                 </Button>
