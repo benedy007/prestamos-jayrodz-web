@@ -155,6 +155,10 @@ function validateStep(step: number, data: FormData): { message: string; field: s
         return miss("sectorOther", "Si eliges Otro, escribe el sector.");
       }
       if (!g("house")) return miss("house", "Escribe el número de la casa.");
+      if (!g("housing")) return miss("housing", "Indica si la casa es propia, rentada o familiar.");
+      if (g("housing") === "Rentada" && !g("housingTime")) {
+        return miss("housingTime", "Si la casa es rentada, indica cuánto tiempo llevas viviendo ahí.");
+      }
       if (!g("landmark")) return miss("landmark-location", "Escribe la referencia: frente o al lado de qué queda.");
       return null;
     }
@@ -1489,6 +1493,37 @@ export function LoanForm() {
               placeholder="No. 12"
             />
           </Field>
+          <Field label="La casa es" htmlFor="housing">
+            <Select
+              id="housing"
+              name="housing"
+              value={housing}
+              onChange={(e) => {
+                setHousing(e.target.value);
+                if (e.target.value !== "Rentada") setHousingTime("");
+              }}
+            >
+              <option value="">Elige una opción</option>
+              <option value="Propia">Propia</option>
+              <option value="Rentada">Rentada</option>
+              <option value="Familiar">Familiar</option>
+            </Select>
+          </Field>
+          {housing === "Rentada" ? (
+            <Field
+              label="Tiempo viviendo ahí"
+              htmlFor="housingTime"
+              hint="Ejemplo: 8 meses, 2 años."
+            >
+              <Input
+                id="housingTime"
+                name="housingTime"
+                value={housingTime}
+                onChange={(e) => setHousingTime(e.target.value)}
+                placeholder="Ej. 2 años"
+              />
+            </Field>
+          ) : null}
           <Field label="Referencia (frente o al lado de)" htmlFor="landmark-location">
             <Input
               id="landmark-location"
